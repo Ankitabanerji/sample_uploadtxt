@@ -21,7 +21,10 @@ def index():
             filename = "resources/sample.txt"
             fw = open(filename, "w")
             fw.write(searchstring)
-            return render_template("results.html", st= searchstring)
+            fw.close()
+            fw = open(filename, "r")
+            data = fw.read()
+            return render_template("results.html", st= data)
 
         except Exception as e:
             print('The Exception message is: ', e)
