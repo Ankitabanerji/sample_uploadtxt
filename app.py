@@ -2,22 +2,23 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS, cross_origin
 import json
 import requests
+import os
 
 app = Flask(__name__)
 
 
-def upload_on_gdrive():
+def upload_on_gdrive(searchstring):
     headers = {"Authorization": "Bearer "
                                 "ya29.a0AVA9y1vVUMLTcq6nRnVZksDQLl5ScGdwBx315zuIDqqxURUKvHjL2h4qT952ZKvOCTagvTXxIgqDjWy"
                                 "-7M_FvBfyEwY48Y"
                                 "-T54QsVLHhAIunQ82JZkf4GfhwPzhUhbVDcsYicA__2Eq6T5YKRZ5l_chyFPgUaCgYKATASAQASFQE65dr8RBSENWYC-SLZkG7ZP2GVPg0163"}
     para = {
-        "name": "sample.txt",
+        "name": "_".join(searchstring.split(' ')) + ".txt",
         "parents": ["1_gwj96gYxHsmvkr9u0MR_4iQrp1PHzLg"]
     }
     files = {
         'data': ('metadata', json.dumps(para), 'application/json; charset=UTF-8'),
-        'file': open("./resources/sample.txt", "rb")
+        'file': open("./" + "resources/" + "_".join(searchstring.split(' ')) + ".txt", "rb")
     }
     r = requests.post(
         "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
@@ -40,17 +41,25 @@ def index():
         try:
             searchstring = request.form['content'].replace(" ", "")
 
-            filename = "resources/sample.txt"
+            filename = "resources/" + "_".join(searchstring.split(' ')) + ".txt"
             fw = open(filename, "w")
             fw.write(searchstring)
             fw.close()
             try:
-                upload_on_gdrive()
+                upload_on_gdrive(searchstring)
             except:
                 print("could not upload")
 
             fw = open(filename, "r")
             data = fw.read()
+            fw.close()
+
+            if os.path.exists("resources/" + "_".join(searchstring.split(' ')) + ".txt"):
+                os.remove("resources/" + "_".join(searchstring.split(' ')) + ".txt")
+                print("file removed")
+            else:
+                print("The file does not exist")
+
             return render_template("results.html", st=data)
 
         except Exception as e:
