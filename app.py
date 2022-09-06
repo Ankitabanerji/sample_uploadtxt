@@ -2,30 +2,38 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS, cross_origin
 import json
 import requests
+from pytube import YouTube
 import os
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload
 
 app = Flask(__name__)
 
+service_account_info = json.loads(os.getenv('CREDENTIALS'))
+creds = service_account.Credentials.from_service_account_info(
+    service_account_info)
 
-def upload_on_gdrive(searchstring):
-    headers = {"Authorization": "Bearer "
-                                "ya29.a0AVA9y1vVUMLTcq6nRnVZksDQLl5ScGdwBx315zuIDqqxURUKvHjL2h4qT952ZKvOCTagvTXxIgqDjWy"
-                                "-7M_FvBfyEwY48Y"
-                                "-T54QsVLHhAIunQ82JZkf4GfhwPzhUhbVDcsYicA__2Eq6T5YKRZ5l_chyFPgUaCgYKATASAQASFQE65dr8RBSENWYC-SLZkG7ZP2GVPg0163"}
-    para = {
-        "name": "_".join(searchstring.split(' ')) + ".txt",
-        "parents": ["1_gwj96gYxHsmvkr9u0MR_4iQrp1PHzLg"]
-    }
-    files = {
-        'data': ('metadata', json.dumps(para), 'application/json; charset=UTF-8'),
-        'file': open("./" + "resources/" + "_".join(searchstring.split(' ')) + ".txt", "rb")
-    }
-    r = requests.post(
-        "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
-        headers=headers,
-        files=files
-    )
-    print(r.text)
+
+def upload_basic():
+    try:
+
+        service = build('drive', 'v3', credentials=creds)
+
+        file_metadata = {'name': 'video.mp4',
+                         "parents": ["1_gwj96gYxHsmvkr9u0MR_4iQrp1PHzLg"]}
+        media = MediaFileUpload('./resources/video', resumable=True)
+        # pylint: disable=maybe-no-member
+        file = service.files().create(body=file_metadata, media_body=media,
+                                      fields='id').execute()
+        print(F'File ID: {file.get("id")}')
+
+    except HttpError as error:
+        print(F'An error occurred: {error}')
+        file = None
+
+    return file.get('id')
 
 
 @app.route('/', methods=['GET'])  # route to display the home page
@@ -41,26 +49,23 @@ def index():
         try:
             searchstring = request.form['content'].replace(" ", "")
 
-            filename = "resources/" + "_".join(searchstring.split(' ')) + ".txt"
-            fw = open(filename, "w")
-            fw.write(searchstring)
-            fw.close()
+            link = "https://www.youtube.com/watch?v=oUlAJe4Tp8o&ab_channel=KrishNaik"
+            yt = YouTube(link)
             try:
-                upload_on_gdrive(searchstring)
+                yt.streams.filter(progressive=True,
+                                  file_extension="mp4").first().download(output_path="resources/",
+                                                                         filename="video")
+            except:
+                print("Some Error!")
+
+            print('Task Completed!')
+
+            try:
+                fid = upload_basic()
             except:
                 print("could not upload")
 
-            fw = open(filename, "r")
-            data = fw.read()
-            fw.close()
-
-            if os.path.exists("resources/" + "_".join(searchstring.split(' ')) + ".txt"):
-                os.remove("resources/" + "_".join(searchstring.split(' ')) + ".txt")
-                print("file removed")
-            else:
-                print("The file does not exist")
-
-            return render_template("results.html", st=data)
+            return render_template("results.html", st="done"+fid)
 
         except Exception as e:
             print('The Exception message is: ', e)
