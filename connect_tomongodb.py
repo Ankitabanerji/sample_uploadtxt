@@ -1,7 +1,6 @@
 import pymongo
 
-client = pymongo.MongoClient(
-    "mongodb+srv://youtubescrap:mongodb123@youtubedatacluster.bx1q6kc.mongodb.net/?retryWrites=true&w=majority")
+client = pymongo.MongoClient()
 db = client.test
 
 print(db)
