@@ -8,6 +8,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
+from connect_tomongodb import upload_data_mongo
 
 app = Flask(__name__)
 
@@ -64,7 +65,7 @@ def index():
                 fid = upload_basic()
             except:
                 print("could not upload")
-
+            upload_data_mongo()
             return render_template("results.html", st="done"+fid)
 
         except Exception as e:
