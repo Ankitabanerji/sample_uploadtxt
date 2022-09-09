@@ -19,3 +19,6 @@ pymongo
 pymongo[srv]
 google-api-python-client
 pytube
+pip
+snowflake-connector-python
+
