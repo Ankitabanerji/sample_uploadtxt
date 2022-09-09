@@ -1,17 +1,25 @@
 import logging
 import snowflake.connector
+import os
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+user = os.getenv('USER')
+passwrd = os.getenv('PASSWORD')
+account_name = os.getenv('ACCOUNT')
+warehouse_name = os.getenv('WAREHOUSE')
+database_name = os.getenv('DATABASE')
+schema_name = os.getenv('SCHEMA')
+
 
 def upload_on_snowflake(s):
-    con_eb = snowflake.connector.connect(user='ankitaSnowflake',
-                                         password='Ankitasnowflake#1802',
-                                         account='WC52939.ap-southeast-1',
-                                         warehouse='COMPUTE_WH',
-                                         database='YOUTUBE_SCRAPE_DATA',
-                                         schema='PUBLIC',
+    con_eb = snowflake.connector.connect(user=user,
+                                         password=passwrd,
+                                         account=account_name,
+                                         warehouse=warehouse_name,
+                                         database=database_name,
+                                         schema=schema_name,
                                          autocommit=True)
     db_cursor_eb = con_eb.cursor()
     print(db_cursor_eb)
